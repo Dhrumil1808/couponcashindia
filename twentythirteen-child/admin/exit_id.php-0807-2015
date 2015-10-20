@@ -1,0 +1,47 @@
+<?php
+global $wpdb;
+$exit_id_array= $wpdb->get_results("SELECT * FROM exit_id_table");
+if(count($exit_id_array)>0)
+{
+
+?>
+ <table class="wp-list-table widefat fixed post_status">
+    <thead>
+   <tr>
+    <th>ID</th>
+    <th>Exit ID</th>
+    <th>User ID</th>   
+    <th>Retailer</th>
+    <th>Cashback</th>
+    <th>Date/Time</th>    
+    <th>Action</th>
+</tr>
+    </thead>
+
+<tbody>
+<?php
+foreach ($exit_id_array as $exit_id) {
+    ?>
+    <tr>
+    <td><?php echo $exit_id->id;?></td>
+    <td><?php echo $exit_id->exit_id;?></td>
+    <td><?php echo $exit_id->user_id;?></td>    
+    <td><?php echo $exit_id->retailer;?></td>
+    <td><?php echo $exit_id->cashback;?></td>
+    <td><?php echo $exit_id->date1;?></td>
+    <td><a href="<?php echo site_url(); ?>/wp-admin/admin.php?page=exit_id&idd=<?php echo $exit_id->id; ?>">Edit</a>|<a href="?page=exit_id&id=<?php echo $exit_id->id; ?>&s=d" onclick="return confirm('Are you sure want to delete this row?');">Delete</a></td>
+</tr>
+
+<?php }
+?>
+</tbody>
+</table>
+<?php
+}
+else{
+?>
+<div align="center">No data Founds</div>
+<?php
+}
+ 
+?>

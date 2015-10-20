@@ -1,0 +1,598 @@
+<?php
+/**
+ * The Template for displaying product archives, including the main shop page which is a post type archive.
+ *
+ * Override this template by copying it to yourtheme/woocommerce/archive-product.php
+ *
+ * @author    WooThemes
+ * @package   WooCommerce/Templates
+ * @version     2.0.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+  exit; // Exit if accessed directly
+}
+
+get_header(); ?>
+  <?php 
+    $name=get_queried_object()->name;
+    //Include the class.
+include "api/clusterdev.flipkart-api.php";
+$flipkart = new \clusterdev\Flipkart("Affiliate247", "5fb8e8b4b3294df686e3633b49f77b4e", "json");
+$details1 = $flipkart->call_url('https://affiliate-api.flipkart.net/affiliate/search/json?query='.$name.'&resultCount=100');
+if(!$details1){
+  // echo 'Error: Could not retrieve products list.';
+  // exit();
+}
+$details1 = json_decode($details1, TRUE);
+$products = $details1['productInfoList'];
+$product_array=array();
+
+//Make sure there are products in the list.
+if(count($products) > 0){
+  foreach ($products as $product) {
+
+    //Hide out-of-stock items unless requested.
+    $inStock = $product['productBaseInfo']['productAttributes']['inStock'];
+    if(!$inStock && $hidden)
+      continue;
+    
+    
+    $productId = $product['productBaseInfo']['productIdentifier']['productId'];
+    $title = $product['productBaseInfo']['productAttributes']['title'];
+    $productDescription = $product['productBaseInfo']['productAttributes']['productDescription'];
+
+      //print_r($product['productBaseInfo']['productAttributes']['imageUrls']);
+    //We take the 200x200 image, there are other sizes too.
+    $productImage = array_key_exists('400x400', $product['productBaseInfo']['productAttributes']['imageUrls'])?$product['productBaseInfo']['productAttributes']['imageUrls']['400x400']:'';
+    $sellingPrice = $product['productBaseInfo']['productAttributes']['sellingPrice']['amount'];
+    $productUrl = $product['productBaseInfo']['productAttributes']['productUrl'];
+    $productBrand = $product['productBaseInfo']['productAttributes']['productBrand'];
+    $color = $product['productBaseInfo']['productAttributes']['color'];
+    $productUrl = $product['productBaseInfo']['productAttributes']['productUrl'];
+
+    
+    $productImages=explode(',',$productImage);
+     //print_r($productImages);
+    //Setting up the table rows/columns for a 3x3 view.
+       $product_array[] = array (
+                  "id"  =>$productId,
+                  "title"=>$title,
+                  "productImage"=>$productImages,
+                  "sellingPrice"=>$sellingPrice,
+                  "productBrand"=>$productBrand,
+                  "productUrl"=>$productUrl,
+                   "offer_price"=>$offer_price,
+                  'store'=>'Flipkart'
+                  );
+    
+
+  }
+}
+
+
+
+include('api/amazon_api.php');
+$show = amazon_get_signed_url1($name,1);
+
+
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+
+$show = amazon_get_signed_url1($name,2);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 3
+$show = amazon_get_signed_url1($name,3);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 4
+$show = amazon_get_signed_url1($name,4);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 5
+$show = amazon_get_signed_url1($name,5);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 6
+$show = amazon_get_signed_url1($name,6);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 7
+$show = amazon_get_signed_url1($name,7);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 8
+$show = amazon_get_signed_url1($name,8);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 9
+$show = amazon_get_signed_url1($name,9);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 10
+$show = amazon_get_signed_url1($name,10);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+//page 11
+$show = amazon_get_signed_url1($name,11);
+$ch = curl_init($show);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+$c = curl_exec($ch);
+
+$xml = simplexml_load_string($c);
+$json = json_encode($xml);
+$array = json_decode($json,TRUE);
+//print_r($array);
+$checkamazon = $array[Items][Item][0][DetailPageURL];
+
+if($checkamazon != ""){
+//echo "<br><br><font size='3' color='#$lcolor' style='padding: 3px;'><b>Products</b></font><br>";
+}
+
+for($i=0;$i<10;$i++){
+
+$aid=$array[Item][Item][$i][ASIN];
+$brand=$array[Item][Item][$i][ItemAttributes][Brand];
+$aprice = $array[Items][Item][$i][ItemAttributes][ListPrice][FormattedPrice];
+$aDescription = $array[Items][Item][$i][ItemAttributes][Title];
+$aUrl = $array[Items][Item][$i][DetailPageURL];
+$aImage = $array[Items][Item][$i][MediumImage][URL];
+$offer_price=$array[Item][Item][$i][ItemAttributes][OfferSummary][LowestNewPrice][FormattedPrice];
+  
+
+if($aUrl != ""){
+        $product_array[] = array (
+                  "id"  =>$aid,
+                  "title"=>$aDescription,
+                  "productImage"=>$aImage,
+                  "sellingPrice"=>$aprice,
+                  "productBrand"=>$brand,
+                  "productUrl"=>$aUrl,
+                  "offer_price"=>$offer_price,
+                  'store'=>'Amazon'
+                  );
+     }
+}
+  ?>
+<div class="product-wrap">
+  <?php foreach ($product_array as $value) {
+
+      $image_url='';
+      if($value[store]=='Flipkart') {
+        if(is_array($value[productImage]))
+        {
+          if($value[productImage][0]!='')
+          {
+            $image_url=$value[productImage][0];
+          }
+          else if($value[productImage][1]!='')
+          {
+            $image_url=$value[productImage][1];
+          }
+        }
+        else{
+          $image_url=$value[productImage];
+        }
+      }
+      else{
+        $image_url=$value[productImage];
+      }
+      if($image_url=='') continue;
+    ?>
+  <div class="each-product">
+    <div class="image-wrap">
+      <img src="<?php  echo $image_url; ?>" width="200px" height="200px">
+    </div>
+    <div class="details-wrap">
+      <p class="title"><a href="<?php echo $value[productUrl]?>"><?php echo substr($value[title],0,120); ?></a></p>
+      <p class="bye-from">Buy from :<?php echo $value[store]; ?></p>
+      <div class="price"><span class="sell-price"><?php echo $value[sellingPrice]; ?></span>
+        <span class="off-price"><?php ?></span></div>
+      <p class="flat-off"><a href="<?php echo $value[productUrl];?>">See Details</a></p>
+      <button class="grab-off"><a href="<?php echo $value[productUrl];?>">Grab deal</a></button>
+    </div>
+  </div>
+  <?php } ?>
+</div>
+<?php
+ $args = array(
+  'show_option_all'    => '',
+  'orderby'            => 'name',
+  'order'              => 'ASC',
+  'style'              => 'list',
+  'show_count'         => 0,
+  'hide_empty'         => 0,
+  'use_desc_for_title' => 1,
+  'child_of'           => get_queried_object()->term_id,
+  'feed'               => '',
+  'feed_type'          => '',
+  'feed_image'         => '',
+  'exclude'            => '',
+  'exclude_tree'       => '',
+  'include'            => '',
+  'hierarchical'       => 1,
+  'title_li'           => __( '' ),
+  'show_option_none'   => __( '' ),
+  'number'             => null,
+  'echo'               => 1,
+  'depth'              => 0,
+  'current_category'   => 0,
+  'pad_counts'         => 0,
+  'taxonomy'           => get_queried_object()->taxonomy,
+  'walker'             => null
+    );
+    wp_list_categories( $args ); 
+?>
+
+<?php get_footer(  ); ?>
